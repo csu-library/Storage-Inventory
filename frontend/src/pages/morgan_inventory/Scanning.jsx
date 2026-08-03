@@ -88,6 +88,44 @@ export default function Scanning() {
     });
   };
 
+  const clearPendingScanState = (sideId, shelfId = null) => {
+    setTreeData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        ranges: prev.ranges.map((range) => ({
+          ...range,
+          sides: range.sides.map((side) => {
+            if (side.id !== sideId) return side;
+
+            return {
+              ...side,
+              session_count: 0,
+              last_scanned_at: null,
+              last_status: null,
+              active_session_id: null,
+              last_session_id: null,
+              ladders: side.ladders.map((ladder) => ({
+                ...ladder,
+                shelves: ladder.shelves.map((shelf) => {
+                  if (shelfId && shelf.id !== shelfId) return shelf;
+                  return {
+                    ...shelf,
+                    session_count: 0,
+                    last_scanned_at: null,
+                    last_status: null,
+                    active_session_id: null,
+                    last_session_id: null,
+                  };
+                }),
+              })),
+            };
+          }),
+        })),
+      };
+    });
+  };
+
   const handleSideClick = async (side) => {
     if (side.active_session_id) {
       navigate(`/morgan/scanning/${side.active_session_id}`);
@@ -97,6 +135,7 @@ export default function Scanning() {
       setRescanModal(side);
       return;
     }
+    clearPendingScanState(side.id);
     setCreating(side.id);
     try {
       const session = await api.createSession({ range_side_id: side.id });
@@ -116,6 +155,7 @@ export default function Scanning() {
       setRescanModal({ ...side, ...shelf, side_id: side.id, shelf_id: shelf.id });
       return;
     }
+    clearPendingScanState(side.id, shelf.id);
     setCreating(shelf.id);
     try {
       const session = await api.createSession({ shelf_id: shelf.id, range_side_id: side.id });
@@ -128,6 +168,7 @@ export default function Scanning() {
 
   const handleRescan = async (target) => {
     setRescanModal(null);
+    clearPendingScanState(target.side_id ?? target.id, target.shelf_id ?? null);
     setCreating(target.shelf_id ?? target.id);
     try {
       const session = await api.createSession(
@@ -287,13 +328,13 @@ export default function Scanning() {
                                             return (
                                               <button
                                                 key={shelf.id}
-                                                title={shelfTitle(side)}
+                                                title={shelfTitle(shelf)}
                                                 onClick={() => handleShelfClick(shelf, side)}
                                                 disabled={isCreatingThis}
                                                 className={`w-10 h-10 text-xs font-mono rounded-lg border transition-colors ${
                                                   isCreatingThis
                                                     ? "bg-gray-100 text-gray-400 border-gray-200 cursor-wait"
-                                                    : shelfClasses(side, null)
+                                                    : shelfClasses(shelf, creating)
                                                 }`}
                                               >
                                                 {shelf.shelf_number}
