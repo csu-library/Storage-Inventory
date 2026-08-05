@@ -31,7 +31,16 @@ from api import (
 )
 from db.session import create_tables
 
-app = FastAPI(title="Storage Inventory", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        create_tables()
+    except Exception:
+        # DB not configured yet – that's fine, Settings page will handle it
+        pass
+    yield
+
+app = FastAPI(title="Storage Inventory", version="1.0.0", lifespan=lifespan)
 
 # Allow the Vite dev server to call the API during development
 app.add_middleware(

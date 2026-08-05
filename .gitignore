@@ -7,8 +7,7 @@ venv/
 .venv
 env/
 
-#Electron
-dist-electron/
+#Electron# These directories were used by a previous desktop packaging workflow and are no longer required.dist-electron/
 backend-dist/
 
 # PyInstaller

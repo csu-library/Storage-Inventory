@@ -33,7 +33,7 @@ const MATERIAL_BORDER = {
   "elec media":          "#fdba74",
   "documents":           "#cbd5e1",
 };
-const DEFAULT_COLOR  = "#e5e7eb";
+const DEFAULT_COLOR  = "#6ee7b7";
 const DEFAULT_BORDER = "#9ca3af";
 
 // ── helpers ───────────────────────────────────────────────────────────────────

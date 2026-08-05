@@ -36,7 +36,7 @@ export default function Settings() {
                 ? "Database configuration pending"
                 : "Unable to read configuration"}
           </p>
-          <p className="mt-1"></p>
+          <p className="mt-1 text-sm text-gray-700">{message}</p>
         </div>
       </div>
 

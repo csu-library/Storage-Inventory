@@ -1,62 +1,13 @@
 {
   "name": "storage-inventory",
   "version": "1.0.0",
-  "description": "Electron desktop app for physical storage and inventory management.",
-  "author": "Storage Inventory Team <info@example.com>",
+  "description": "Program for managing physical storage and inventory of library materials.",
+  "author": "Quinn Hughes (quinnjh@colostate.edu)",
   "private": true,
-  "main": "electron/main.js",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && python main.py",
-    "electron:dev": "electron .",
     "build:frontend": "cd frontend && npm run build",
-    "build:backend": "backend/.venv/bin/python3 -m PyInstaller --distpath backend_dist --noconfirm StorageInventory.spec",
-    "build": "npm run build:frontend && npm run build:backend && electron-builder",
-    "install:backend": "backend/.venv/bin/python3 -m pip install -r backend/requirements.txt"
-  },
-  "build": {
-    "appId": "com.storage.inventory",
-    "productName": "Storage Inventory",
-    "icon": "frontend/public/fish.svg",
-    "directories": {
-      "output": "dist-electron"
-    },
-    "files": [
-      "electron/**/*",
-      "frontend/dist/**/*",
-      "backend_dist/**/*"
-    ],
-    "extraResources": [
-      {
-        "from": "backend_dist/",
-        "to": "backend_dist/",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "linux": {
-      "category": "Utility",
-      "icon": "frontend/public/fish.svg"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "electron/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    }
-  },
-  "devDependencies": {
-    "electron": "^34.0.0",
-    "electron-builder": "^25.1.8",
-    "vite": "^8.0.16"
-  },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.3.1",
-    "tailwindcss": "^4.3.1"
+    "install:backend": "cd backend && python -m pip install -r requirements.txt"
   }
 }

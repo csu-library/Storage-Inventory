@@ -1,18 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Form, UploadFile, File
 from fastapi.responses import PlainTextResponse, StreamingResponse, RedirectResponse, FileResponse
 from pydantic import BaseModel
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional, Dict
 from datetime import datetime
 import io
 import os
-import sys
-import json
-from pathlib import Path
 import pandas as pd
 
-from db.session import get_db, initialize_database
+from db.session import get_db
 from db.models import Project, Category, EmptyShelf, AccessionedItem
 
 router = APIRouter()
@@ -508,120 +505,3 @@ def get_shelf_defaults(shelf_id: int, db: Session = Depends(get_db)):
         "default_items_per_shelf": category.default_items_per_shelf if category else 25,
         "status": shelf.status
     }
-
-# ── Connection Manager / Database ────────
-class DatabaseConfig(BaseModel):
-    host: str
-    port: str
-    database: str
-    username: str
-    password: str
-
-class ConnectionRequest(BaseModel):
-    type: str
-    config: Optional[DatabaseConfig] = None
-
-if getattr(sys, 'frozen', False):
-    CONFIG_DIR = Path(sys.executable).parent
-else:
-    CONFIG_DIR = Path(__file__).parent.parent
-
-CONFIG_FILE = CONFIG_DIR / 'db_config.json'
-
-
-def get_current_config():
-    """Read current database configuration"""
-    if CONFIG_FILE.exists():
-        with open(CONFIG_FILE, 'r') as f:
-            return json.load(f)
-    return {
-        'type': 'sqlite',
-        'config': {
-            'host': '',
-            'port': '5432',
-            'database': 'accessioning_app',
-            'username': '',
-            'password': ''
-        }
-    }
-
-
-def save_config(config_data: dict):
-    """Save database configuration to file"""
-    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(CONFIG_FILE, 'w') as f:
-        json.dump(config_data, f, indent=2)
-
-@router.get("/database/connection")
-async def get_connection():
-    """Get current database connection configuration"""
-    config = get_current_config()
-    if config.get('config'):
-        config['config']['password'] = ''
-    return config
-
-@router.post("/database/test")
-async def test_connection(request: ConnectionRequest):
-    """Test database connection without saving"""
-    if request.type == 'sqlite':
-        return {"success": True, "message": "SQLite connection available"}
-
-    elif request.type == 'postgresql':
-        if not request.config:
-            raise HTTPException(status_code=400, detail="PostgreSQL requires configuration")
-
-        try:
-            conn_str = f"postgresql+psycopg2://{request.config.username}:{request.config.password}@{request.config.host}:{request.config.port}/{request.config.database}"
-            engine = create_engine(conn_str)
-            with engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
-
-            return {
-                "success": True,
-                "message": f"Successfully connected to PostgreSQL database '{request.config.database}'"
-            }
-        except Exception as e:
-            error_msg = str(e)
-            if "does not exist" in error_msg:
-                detail = f"Database '{request.config.database}' does not exist. Please create it first:\n\nCREATE DATABASE {request.config.database};"
-            elif "authentication failed" in error_msg or "password authentication failed" in error_msg:
-                detail = "Authentication failed. Please check your username and password."
-            elif "Connection refused" in error_msg or "could not connect" in error_msg:
-                detail = f"Cannot connect to PostgreSQL server at {request.config.host}:{request.config.port}. Is the server running?"
-            else:
-                detail = f"Connection failed: {error_msg}"
-
-            raise HTTPException(status_code=400, detail=detail)
-    else:
-        raise HTTPException(status_code=400, detail="Invalid database type")
-
-@router.post("/database/connection")
-async def save_connection(request: ConnectionRequest):
-    """Save database connection configuration and reload"""
-    config_data = {'type': request.type}
-
-    if request.type == 'postgresql':
-        if not request.config:
-            raise HTTPException(status_code=400, detail="PostgreSQL requires configuration")
-
-        config_data['config'] = {
-            'host': request.config.host,
-            'port': request.config.port,
-            'database': request.config.database,
-            'username': request.config.username,
-            'password': request.config.password
-        }
-    else:
-        config_data['config'] = {}
-
-    try:
-        save_config(config_data)
-        from db.models import Base
-        engine, SessionLocal = initialize_database()
-        Base.metadata.create_all(bind=engine)
-        return {
-            "success": True,
-            "message": f"Successfully switched to {request.type} database!"
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save configuration: {str(e)}")
