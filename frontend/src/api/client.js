@@ -1,5 +1,8 @@
-﻿// Central API helper – all requests go to /api (proxied to :8765 in dev)
-const BASE = "/api";
+﻿// Central API helper – all requests go to <BASE_URL>api. BASE_URL is "/" in
+// dev (proxied to :8765 by vite.config.js) and "/storageinv/" in the
+// production build, so this resolves to "/api" and "/storageinv/api"
+// respectively without any further changes needed here.
+const BASE = `${import.meta.env.BASE_URL}api`;
 
 async function parseResponse(res) {
   const contentType = res.headers.get("content-type") || "";

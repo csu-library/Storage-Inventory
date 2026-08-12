@@ -114,9 +114,14 @@ if __name__ == "__main__":
     if is_packaged:
         threading.Timer(1.5, _open_browser).start()
 
+    # Auto-reload is the right default for `python main.py` during local
+    # development. Production (see the systemd unit in DEPLOYMENT.md) sets
+    # UVICORN_RELOAD=0 to disable it there.
+    reload_enabled = not is_packaged and os.environ.get("UVICORN_RELOAD", "1") != "0"
+
     uvicorn.run(
         "main:app",
         host="127.0.0.1",
         port=8765,
-        reload=not is_packaged,
+        reload=reload_enabled,
     )
