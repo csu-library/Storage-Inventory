@@ -140,7 +140,7 @@ export const api = {
       const form = new FormData();
       form.append("file", file);
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/analytics/upload");
+      xhr.open("POST", `${BASE}/analytics/upload`);
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
       };
@@ -191,7 +191,7 @@ export const api = {
       const form = new FormData();
       form.append("file", file);
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `/api/scanning/sessions/${sessionId}/upload`);
+      xhr.open("POST", `${BASE}/scanning/sessions/${sessionId}/upload`);
       xhr.onload = () => {
         let body;
         try { body = JSON.parse(xhr.responseText); } catch { body = {}; }
